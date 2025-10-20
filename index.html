@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Docs Workflow Exercise</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-dark-blue': '#00446A',
+                        'brand-gray': '#939598',
+                        'brand-yellow': '#FDB913',
+                        'brand-dark-gray': '#54534A',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-image: linear-gradient(to top right, #00446A, #002d4a);
+        }
+        .desktop-icon {
+            transition: transform 0.2s ease, background-color 0.2s ease;
+        }
+        .desktop-icon:hover {
+            transform: translateY(-4px);
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        .draggable {
+            cursor: grab;
+            transition: all 0.2s ease-in-out;
+        }
+        .draggable.dragging {
+            opacity: 0.5;
+            transform: scale(0.95);
+            cursor: grabbing;
+        }
+        .drop-target {
+            transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+        }
+        .drop-target.drag-over {
+            border-color: #FDB913;
+            background-color: rgba(253, 185, 19, 0.1);
+        }
+        #feedback-message {
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
+        /* Animation for elements appearing */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+
+    <div class="bg-brand-dark-gray p-6 sm:p-8 rounded-xl shadow-2xl max-w-5xl w-full text-center">
+
+        <!-- Exercise Title & Instructions -->
+        <div id="exercise-header">
+             <h1 class="text-3xl font-bold text-white">Scenario: Your Resume for the Job</h1>
+             <p id="instructions" class="mt-2 text-xl text-brand-yellow font-medium"></p>
+        </div>
+       
+        <!-- Faux Browser/Desktop Container -->
+        <div class="mt-6 bg-gray-800 bg-opacity-20 rounded-lg p-4 min-h-[500px] shadow-inner">
+             <!-- Faux Browser Chrome -->
+            <div id="browser-header" class="bg-gray-700 rounded-t-md p-2 flex items-center gap-2 hidden">
+                <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                <div id="address-bar" class="flex-1 bg-gray-800 text-gray-300 text-sm rounded mx-4 px-3 py-1 text-left"></div>
+            </div>
+            <!-- Dynamic Content Area -->
+            <div id="scenario-container" class="min-h-[450px] flex items-center justify-center">
+                <!-- Steps will be rendered here -->
+            </div>
+        </div>
+
+
+        <!-- Feedback & Navigation Area -->
+        <div id="feedback-container" class="mt-4 min-h-[6rem] flex flex-col items-center justify-center">
+            <div id="feedback-message" class="p-4 rounded-lg text-center opacity-0 w-full max-w-2xl">
+                <p id="feedback-text" class="font-semibold"></p>
+            </div>
+            <button id="next-button" class="mt-4 bg-green-500 text-white font-bold py-2 px-6 rounded-lg shadow-md hover:bg-green-600 transition-all hidden">
+                Next
+            </button>
+            <button id="retry-button" class="mt-4 bg-brand-yellow text-brand-dark-blue font-bold py-2 px-6 rounded-lg shadow-md hover:bg-yellow-400 transition-all hidden">
+                Try Again
+            </button>
+             <button id="start-button" class="mt-8 bg-brand-yellow text-brand-dark-blue font-bold py-3 px-8 rounded-lg shadow-md hover:bg-yellow-400 transition-all text-lg">
+                Let's Begin
+            </button>
+        </div>
+    </div>
+
+    <script>
+    const scenarioData = [
+        {
+            step: 0,
+            type: 'intro'
+        },
+        {
+            step: 1,
+            type: 'multiple-choice',
+            instructions: 'Your first task is to open your internet browser.',
+            display: 'desktop',
+            url: 'C:\\Users\\JobSeeker\\Desktop',
+            choices: [
+                { id: 'chrome', label: 'Google Chrome', correct: true, icon: `<svg class="w-16 h-16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M21.5,12A9.5,9.5,0,1,1,12,2.5,9.5,9.5,0,0,1,21.5,12Z" fill="#4285f4"/><path d="M21.5,12A9.5,9.5,0,1,1,12,2.5,9.5,9.5,0,0,1,21.5,12Z" stroke="#e7e7e8" stroke-width="0.1"/><path d="M12,2.5A9.5,9.5,0,0,1,18.7,6.2L15.3,11.5a4.5,4.5,0,0,0-6.6,1L5.3,6.2A9.5,9.5,0,0,1,12,2.5Z" fill="#db4437"/><path d="M12,21.5a9.5,9.5,0,0,1-8.7-5.3l5.8-3.3a4.5,4.5,0,0,0,5.3-2.7L20.2,18a9.5,9.5,0,0,1-8.2,3.5Z" fill="#f4b400"/><path d="M3.3,16.2a9.5,9.5,0,0,1,0-8.4l4.2,7.3a4.5,4.5,0,0,0,1.4,6.6l-5.3-3.1a9.5,9.5,0,0,1,.3-2.4Z" fill="#0f9d58"/><path d="M12,16.5a4.5,4.5,0,1,1,4.5-4.5A4.5,4.5,0,0,1,12,16.5Z" fill="white"/><path d="M12,15a3,3,0,1,1,3-3A3,3,0,0,1,12,15Z" fill="#4285f4"/></svg>` },
+                { id: 'word', label: 'Text Editor', correct: false, icon: `<svg class="w-16 h-16 text-blue-300" fill="currentColor" viewBox="0 0 20 20"><path d="M4 3a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V5a2 2 0 00-2-2H4zm0 2h12v10H4V5zm2 2v2h8V7H6zm0 4v2h8v-2H6z"></path></svg>` },
+                { id: 'files', label: 'File Explorer', correct: false, icon: `<svg class="w-16 h-16 text-yellow-300" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>` }
+            ],
+            feedback_correct: 'Exactly! A web browser like Google Chrome is your gateway to online applications.',
+            feedback_incorrect: 'Not quite. That application is used for offline files. You need a browser to access the internet.'
+        },
+        {
+            step: 2,
+            type: 'multiple-choice',
+            instructions: "Navigate to the application for creating and editing text documents.",
+            display: 'webpage',
+            url: 'https://www.google.com',
+            choices: [
+                { id: 'drive-app', label: 'Google Drive', correct: false, icon: `<svg class="w-12 h-12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M24,16.2,16.2,0H7.8L0,13.5,3.9,24,11.7,9Z" fill="#0f9d58"/><path d="M7.8,0,11.7,9l4.2,7.2L7.5,24H3.9L0,13.5Z" fill="#33ac71"/><path d="M7.8,0,0,13.5,3.9,24,7.5,24,11.7,16.2,16.2,0Z" fill="#f4b400"/><path d="m16.2,0-4.5,7.8L7.5,24h12.6l3.9-6.3Z" fill="#db4437"/><path d="M11.7,16.2,16.2,24h3.9L24,16.2Z" fill="#26a65c"/><path d="M16.2,24h3.9l3.9-6.3L11.7,9l4.5,7.2Z" fill="#ffc107"/><path d="m11.7,9,4.5-7.8L24,16.2,20.1,24,16.2,16.2Z" fill="#f44336"/></svg>` },
+                { id: 'docs-app', label: 'Google Docs', correct: true, icon: `<svg class="w-12 h-12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14.5,0h-9A1.5,1.5,0,0,0,4,1.5v21A1.5,1.5,0,0,0,5.5,24h13A1.5,1.5,0,0,0,20,22.5V5.5Z" fill="#4285f4"/><path d="M20,5.5,14.5,0V4a1.5,1.5,0,0,0,1.5,1.5Z" fill="#a1c3ff"/><path d="M15,18H9a.5.5,0,0,1,0-1h6a.5.5,0,0,1,0,1Z" fill="white"/><path d="M15,15H9a.5.5,0,0,1,0-1h6a.5.5,0,0,1,0,1Z" fill="white"/><path d="M12,12H9a.5.5,0,0,1,0-1h3a.5.5,0,0,1,0,1Z" fill="white"/></svg>` },
+                { id: 'account-app', label: 'Google Account', correct: false, icon: `<svg class="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clip-rule="evenodd"></path></svg>` }
+            ],
+            feedback_correct: "Correct! Google Docs is the application you use to write and edit documents.",
+            feedback_incorrect: "That's close, but not quite right. Think about the specific tool for writing."
+        },
+        {
+            step: 3,
+            type: 'drag-and-drop',
+            instructions: "Your resume is written. Now, where is the file actually stored?",
+            url: 'https://docs.google.com/document/d/RE5uM3/edit',
+            elements: {
+                targets: [
+                    { id: "docs", label: "Google Docs App", feedback: "Docs is the editor, but not where the file is stored." },
+                    { id: "drive", label: "Google Drive Storage", feedback: "Correct! Google Drive is the cloud storage for your Docs." },
+                    { id: "account", label: "Google Account", feedback: "Your account is the key, but not the storage location." }
+                ],
+                draggables: [{ id: "document", label: "Resume.gdoc" }],
+            },
+            success_message: "Yes! Your resume is stored in Google Drive, accessed via the Docs app, and tied to your Google Account.",
+            retry_message: "Not quite. Remember: Docs is the editor, Drive is the storage."
+        },
+        {
+            step: 4,
+            type: 'outro',
+            title: 'Great Job!',
+            text: "You've completed the workflow! You now know that you use a browser to access Google Docs, which is the editor for your resume, and the file itself is saved in Google Drive—all connected by your Google Account.",
+            buttonText: 'Restart Exercise'
+        }
+    ];
+
+    let currentStep = 0;
+    const scenarioContainer = document.getElementById('scenario-container');
+    const feedbackContainer = document.getElementById('feedback-container');
+    const feedbackMessage = document.getElementById('feedback-message');
+    const feedbackText = document.getElementById('feedback-text');
+    const nextButton = document.getElementById('next-button');
+    const retryButton = document.getElementById('retry-button');
+    const startButton = document.getElementById('start-button');
+    const instructions = document.getElementById('instructions');
+    const browserHeader = document.getElementById('browser-header');
+    const addressBar = document.getElementById('address-bar');
+
+    function loadStep(stepIndex) {
+        const stepData = scenarioData[stepIndex];
+        scenarioContainer.innerHTML = '';
+        feedbackMessage.classList.add('opacity-0');
+        nextButton.classList.add('hidden');
+        retryButton.classList.add('hidden');
+        startButton.classList.add('hidden');
+        document.getElementById('exercise-header').classList.remove('hidden');
+
+        instructions.textContent = stepData.instructions || '';
+        
+        if (stepData.type === 'intro') {
+            document.getElementById('exercise-header').classList.remove('hidden');
+            instructions.textContent = "You've found the perfect job opening and need a resume. Follow the steps to create one using Google Docs.";
+            browserHeader.classList.add('hidden');
+            startButton.classList.remove('hidden');
+        } else if (stepData.type === 'multiple-choice') {
+            renderMultipleChoice(stepData);
+            browserHeader.classList.toggle('hidden', stepData.display !== 'webpage');
+            addressBar.textContent = stepData.url || '';
+        } else if (stepData.type === 'drag-and-drop') {
+            renderDragAndDrop(stepData);
+            browserHeader.classList.remove('hidden');
+            addressBar.textContent = stepData.url || '';
+        } else if (stepData.type === 'outro') {
+            renderOutro(stepData);
+            browserHeader.classList.add('hidden');
+        }
+    }
+    
+    function renderMultipleChoice(data) {
+        let content = '';
+        if (data.display === 'desktop') {
+            content = `
+            <div class="fade-in w-full h-full flex items-center justify-center gap-8">
+                ${data.choices.map(choice => `
+                    <div class="desktop-icon rounded-lg p-4 cursor-pointer text-center" data-correct="${choice.correct}" data-feedback-correct="${data.feedback_correct}" data-feedback-incorrect="${data.feedback_incorrect}">
+                        ${choice.icon}
+                        <p class="mt-2 font-semibold text-gray-200">${choice.label}</p>
+                    </div>
+                `).join('')}
+            </div>`;
+        } else { // webpage display
+            content = `
+            <div class="fade-in w-full h-full flex flex-col items-center justify-center bg-white rounded-b-md p-8">
+                <img src="https://www.google.com/images/branding/googlelogo/2x/googlelogo_color_272x92dp.png" alt="Google Logo" class="h-24 mb-8"/>
+                <div class="w-full max-w-lg relative">
+                    <input type="text" value="google docs" class="w-full border-2 border-gray-300 rounded-full p-3 pl-5" readonly />
+                    <svg class="w-6 h-6 absolute right-4 top-1/2 -translate-y-1/2 text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path></svg>
+                </div>
+                 <p class="text-gray-600 mt-8 mb-4">Click the application you want to open:</p>
+                 <div class="flex items-center justify-center gap-8">
+                    ${data.choices.map(choice => `
+                        <div class="p-4 cursor-pointer text-center border-2 border-transparent rounded-lg hover:bg-gray-100" data-correct="${choice.correct}" data-feedback-correct="${data.feedback_correct}" data-feedback-incorrect="${data.feedback_incorrect}">
+                            ${choice.icon}
+                            <p class="mt-2 font-semibold text-gray-700">${choice.label}</p>
+                        </div>
+                    `).join('')}
+                 </div>
+            </div>`;
+        }
+        scenarioContainer.innerHTML = content;
+        scenarioContainer.querySelectorAll('[data-correct]').forEach(card => {
+            card.addEventListener('click', handleChoiceSelection);
+        });
+    }
+
+    function handleChoiceSelection(event) {
+        const selectedCard = event.currentTarget;
+        const isCorrect = selectedCard.dataset.correct === 'true';
+
+        document.querySelectorAll('[data-correct]').forEach(card => {
+            card.removeEventListener('click', handleChoiceSelection);
+            card.style.cursor = 'default';
+        });
+        
+        feedbackMessage.classList.remove('bg-green-200', 'text-green-900', 'bg-red-200', 'text-red-900');
+        
+        if (isCorrect) {
+            feedbackText.textContent = selectedCard.dataset.feedbackCorrect;
+            feedbackMessage.classList.add('bg-green-200', 'text-green-900');
+            selectedCard.style.outline = '3px solid #22c55e'; // green-500
+            nextButton.classList.remove('hidden');
+        } else {
+            feedbackText.textContent = selectedCard.dataset.feedbackIncorrect;
+            feedbackMessage.classList.add('bg-red-200', 'text-red-900');
+            selectedCard.style.outline = '3px solid #ef4444'; // red-500
+            retryButton.classList.remove('hidden');
+        }
+        feedbackMessage.classList.remove('opacity-0');
+    }
+
+    function renderDragAndDrop(data) {
+         const content = `
+            <div class="fade-in w-full h-full flex flex-col items-center justify-start bg-gray-100 rounded-b-md text-gray-800 p-6">
+                <!-- Faux Docs UI -->
+                <div class="w-full bg-white p-4 shadow-md">
+                     <div class="flex items-center gap-4">
+                        <svg class="w-8 h-8 text-blue-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14.5,0h-9A1.5,1.5,0,0,0,4,1.5v21A1.5,1.5,0,0,0,5.5,24h13A1.5,1.5,0,0,0,20,22.5V5.5Z" fill="#4285f4"/><path d="M20,5.5,14.5,0V4a1.5,1.5,0,0,0,1.5,1.5Z" fill="#a1c3ff"/><path d="M15,18H9a.5.5,0,0,1,0-1h6a.5.5,0,0,1,0,1Z" fill="white"/><path d="M15,15H9a.5.5,0,0,1,0-1h6a.5.5,0,0,1,0,1Z" fill="white"/><path d="M12,12H9a.5.5,0,0,1,0-1h3a.5.5,0,0,1,0,1Z" fill="white"/></svg>
+                        <div>
+                             <h2 class="font-bold text-lg">Resume.gdoc</h2>
+                             <p class="text-sm text-gray-500">File | Edit | View | Insert...</p>
+                        </div>
+                     </div>
+                </div>
+                <!-- Draggable item -->
+                <div class="flex-grow w-full flex flex-col items-center justify-center">
+                    <p class="text-gray-600 mb-4">Click and drag your finished document...</p>
+                    <div id="${data.elements.draggables[0].id}" draggable="true" class="draggable bg-blue-500 text-white font-bold py-4 px-8 rounded-lg shadow-md text-lg select-none flex items-center gap-2">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M5.5 16.5a1.5 1.5 0 01-1.5-1.5V5a1.5 1.5 0 011.5-1.5h5.293l3.207 3.207v8.293a1.5 1.5 0 01-1.5 1.5H5.5z"></path></svg>
+                        ${data.elements.draggables[0].label}
+                    </div>
+                </div>
+                <!-- Drop targets -->
+                <div class="w-full bg-gray-200 p-4 rounded-md">
+                    <p class="text-gray-700 font-semibold mb-2 text-center">...to its correct storage location.</p>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        ${data.elements.targets.map(item => `
+                            <div id="${item.id}" class="drop-target bg-gray-300 border-2 border-dashed border-gray-400 rounded-lg p-4 flex items-center justify-center h-24">
+                                <span class="text-md font-semibold text-gray-700 text-center">${item.label}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+        scenarioContainer.innerHTML = content;
+        setupDragDropLogic(data);
+    }
+
+    function setupDragDropLogic(data) {
+        const draggable = document.querySelector('.draggable');
+        const targets = document.querySelectorAll('.drop-target');
+        
+        draggable.addEventListener('dragstart', (e) => {
+            e.dataTransfer.setData('text/plain', e.target.id);
+            draggable.classList.add('dragging');
+        });
+        draggable.addEventListener('dragend', () => draggable.classList.remove('dragging'));
+
+        targets.forEach(target => {
+            target.addEventListener('dragover', e => { e.preventDefault(); target.classList.add('drag-over'); });
+            target.addEventListener('dragleave', () => target.classList.remove('drag-over'));
+            target.addEventListener('drop', e => {
+                e.preventDefault();
+                target.classList.remove('drag-over');
+                const targetId = target.id;
+                const targetInfo = data.elements.targets.find(t => t.id === targetId);
+
+                feedbackMessage.classList.remove('bg-green-200', 'text-green-900', 'bg-red-200', 'text-red-900');
+                
+                if (targetId === 'drive') {
+                    feedbackText.textContent = `${targetInfo.feedback} ${data.success_message}`;
+                    feedbackMessage.classList.add('bg-green-200', 'text-green-900');
+                    draggable.draggable = false;
+                    draggable.style.cursor = 'not-allowed';
+                    draggable.style.opacity = '0.7';
+                    target.innerHTML = `<span class="text-green-700 font-bold">Correct!</span>`;
+                    target.classList.replace('bg-gray-300', 'bg-green-200');
+                    target.classList.replace('border-gray-400', 'border-green-500');
+                    nextButton.classList.remove('hidden');
+                } else {
+                    feedbackText.textContent = `${targetInfo.feedback} ${data.retry_message}`;
+                    feedbackMessage.classList.add('bg-red-200', 'text-red-900');
+                    retryButton.classList.remove('hidden');
+                }
+                feedbackMessage.classList.remove('opacity-0');
+            });
+        });
+    }
+
+    function renderOutro(data) {
+        document.getElementById('exercise-header').classList.add('hidden');
+        const content = `
+            <div class="fade-in text-center">
+                <h1 class="text-4xl font-bold text-white">${data.title}</h1>
+                <p class="mt-4 text-lg text-gray-300 max-w-2xl mx-auto">${data.text}</p>
+                <button id="restart-button" class="mt-8 bg-brand-yellow text-brand-dark-blue font-bold py-3 px-8 rounded-lg shadow-md hover:bg-yellow-400 transition-all text-lg">
+                    ${data.buttonText}
+                </button>
+            </div>
+        `;
+        scenarioContainer.innerHTML = content;
+        document.getElementById('restart-button').addEventListener('click', () => {
+            currentStep = 0;
+            loadStep(currentStep);
+        });
+    }
+
+    startButton.addEventListener('click', () => {
+        currentStep++;
+        loadStep(currentStep);
+    });
+    
+    nextButton.addEventListener('click', () => {
+        currentStep++;
+        if (currentStep < scenarioData.length) loadStep(currentStep);
+    });
+
+    retryButton.addEventListener('click', () => loadStep(currentStep));
+
+    // Initial load
+    loadStep(currentStep);
+    </script>
+</body>
+</html>
